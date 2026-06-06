@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสอบตัวแทนประกันชีวิต</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; display: flex; justify-content: center; padding: 50px; background-color: #f4f7f6; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #333; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>เข้าสู่ระบบทดสอบ</h2>
+    <input type="text" id="userName" placeholder="กรอกชื่อ-นามสกุล" required>
+    
+    <label for="setSelect">เลือกชุดข้อสอบ:</label>
+    <select id="setSelect">
+        <option value="1">ชุดที่ 1</option>
+        <option value="2">ชุดที่ 2</option>
+        <option value="3">ชุดที่ 3</option>
+        <option value="4">ชุดที่ 4</option>
+        <option value="5">ชุดที่ 5</option>
+        <option value="6">ชุดที่ 6</option>
+        <option value="7">ชุดที่ 7</option>
+        <option value="8">ชุดที่ 8</option>
+        <option value="9">ชุดที่ 9</option>
+        <option value="10">ชุดที่ 10</option>
+    </select>
+
+    <button onclick="startExam()">เริ่มทำข้อสอบ</button>
+</div>
+
+<script>
+    function startExam() {
+        const name = document.getElementById('userName').value;
+        const setId = document.getElementById('setSelect').value;
+        
+        if (!name) {
+            alert("กรุณากรอกชื่อ-นามสกุลก่อนครับ");
+            return;
+        }
+        
+        // บันทึกข้อมูลเบื้องต้นลง Session Storage เพื่อส่งต่อไปยังหน้าถัดไป
+        sessionStorage.setItem('userName', name);
+        sessionStorage.setItem('setId', setId);
+        
+        console.log("เริ่มทำข้อสอบโดย: " + name + " ชุดที่: " + setId);
+        // เดี๋ยวเราจะทำลิงก์ให้ Redirect ไปหน้าข้อสอบในขั้นตอนถัดไปครับ
+    }
+</script>
+
+</body>
+</html>
