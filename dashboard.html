@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>เลือกชุดข้อสอบ</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; display: flex; justify-content: center; padding: 50px; background-color: #f4f7f6; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; background: white; }
+        button:hover { background-color: #e9ecef; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>สวัสดีคุณ <span id="displayName"></span></h2>
+    <p>เลือกชุดข้อสอบที่ต้องการทำ:</p>
+    <div id="setButtons"></div>
+</div>
+
+<script>
+    // ดึงชื่อมาแสดง
+    document.getElementById('displayName').innerText = localStorage.getItem('userName');
+    
+    // สร้างปุ่ม 1-10
+    const container = document.getElementById('setButtons');
+    for(let i=1; i<=10; i++) {
+        let btn = document.createElement('button');
+        btn.innerText = `ทำข้อสอบชุดที่ ${i}`;
+        btn.onclick = () => {
+            sessionStorage.setItem('setId', i);
+            window.location.href = 'exam.html'; // ลิงก์ไปหน้าข้อสอบ (ที่เราจะทำกันในขั้นตอนหน้า)
+        };
+        container.appendChild(btn);
+    }
+</script>
+</body>
+</html>
