@@ -30,27 +30,31 @@
     const setIdRaw = sessionStorage.getItem('setId');
     document.getElementById('setNum').innerText = setIdRaw || "ไม่ระบุ";
 
-    async function loadQuestions() {
+        async function loadQuestions() {
         const container = document.getElementById('examContainer');
+        const setId = sessionStorage.getItem('setId');
         
-        // **หัวใจสำคัญ:** แปลงค่าเป็น Number เพื่อให้ตรงกับชนิดข้อมูลใน Supabase
-        const setIdNumber = Number(setIdRaw);
+        console.log("กำลังดึงข้อสอบชุดที่:", setId);
         
-        console.log("กำลังดึงข้อสอบชุดที่ (เลข):", setIdNumber);
-        
+        // 1. ดึงข้อมูลทั้งหมดในตาราง questions ออกมา (ไม่ต้องกรองที่ Supabase)
         const { data, error } = await _supabase
             .from('questions')
-            .select('*')
-            .eq('set_id', setIdNumber); 
+            .select('*'); 
             
         if (error) {
             container.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
             return;
         }
 
-        if (data && data.length > 0) {
+        // 2. ใช้ JavaScript กรองข้อมูลเอง เพื่อแก้ปัญหาเรื่องชนิดข้อมูลไม่ตรงกัน
+        // เราใช้ .toString().trim() เพื่อให้แน่ใจว่าไม่มีช่องว่างและเป็นข้อความเหมือนกัน
+        const filteredData = data.filter(q => String(q.set_id).trim() === String(setId).trim());
+
+        console.log("ข้อมูลที่กรองได้:", filteredData);
+
+        if (filteredData && filteredData.length > 0) {
             container.innerHTML = '';
-            data.forEach((q, index) => {
+            filteredData.forEach((q, index) => {
                 container.innerHTML += `
                     <div class="question">
                         <p>${index + 1}. ${q.question_text}</p>
@@ -62,7 +66,7 @@
                 `;
             });
         } else {
-            container.innerHTML = `<p>ไม่พบข้อสอบในชุดที่ ${setIdNumber} (โปรดตรวจสอบใน Supabase ว่ามีข้อมูลที่ set_id เป็น ${setIdNumber} หรือไม่)</p>`;
+            container.innerHTML = `<p>ไม่พบข้อมูลชุดที่ ${setId} (ลองตรวจสอบใน Supabase ว่าช่อง set_id มีเลข 1 อยู่จริงไหม)</p>`;
         }
     }
 
