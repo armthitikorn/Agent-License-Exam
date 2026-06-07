@@ -5,64 +5,42 @@
     <title>แบบทดสอบ</title>
     <style>
         .container { max-width: 600px; margin: auto; padding: 20px; font-family: sans-serif; }
-        .question { margin-bottom: 20px; padding: 15px; border-bottom: 1px solid #ccc; }
-        button { background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; }
-        button:hover { background-color: #218838; }
+        .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>ทำข้อสอบชุดที่ <span id="setNum"></span></h2>
-    <div id="examContainer">
-        <p>กำลังโหลดข้อสอบ...</p>
-    </div>
+    <div id="examContainer">กำลังโหลดข้อสอบ...</div>
     <button onclick="submitExam()">ส่งข้อสอบ</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-    // โค้ดนี้จะสร้างกล่องสีดำที่มุมหน้าจอเพื่อแสดงสิ่งที่ปกติจะอยู่ใน Console
-    (function(){
-        const logBox = document.createElement('div');
-        logBox.id = 'console-overlay';
-        logBox.style = 'position:fixed; bottom:0; left:0; width:100%; height:150px; background:black; color:lime; overflow:auto; z-index:9999; font-size:12px; padding:10px;';
-        document.body.appendChild(logBox);
-        console.log = function(msg) { logBox.innerHTML += msg + '<br>'; };
-    })();
     const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
     
-    // ดึงและแสดงผลเลขชุดข้อสอบ
-    const setIdRaw = sessionStorage.getItem('setId');
-    document.getElementById('setNum').innerText = setIdRaw || "ไม่ระบุ";
-
-        async function loadQuestions() {
-    const container = document.getElementById('examContainer');
     const setId = sessionStorage.getItem('setId');
-    
-    // บังคับให้ setId กลายเป็นตัวเลข (Number) แน่นอน 100%
-    const finalSetId = Number(setId); 
-    
-    console.log("กำลังดึงข้อมูลด้วย set_id:", finalSetId); // ดูใน Console ว่าเป็นเลข 1 หรือไม่
-    
-    const { data, error } = await _supabase
-        .from('questions')
-        .select('*')
-        .eq('set_id', finalSetId); // ส่งเป็นตัวเลขไปหาตาราง int4
+    document.getElementById('setNum').innerText = setId;
+
+    async function loadQuestions() {
+        const container = document.getElementById('examContainer');
         
-    if (error) {
-        container.innerHTML = "Error: " + error.message;
-        return;
-    }
-        // 2. ใช้ JavaScript กรองข้อมูลเอง เพื่อแก้ปัญหาเรื่องชนิดข้อมูลไม่ตรงกัน
-        // เราใช้ .toString().trim() เพื่อให้แน่ใจว่าไม่มีช่องว่างและเป็นข้อความเหมือนกัน
-        const filteredData = data.filter(q => String(q.set_id).trim() === String(setId).trim());
+        // ดึงข้อมูลทั้งหมดในตาราง questions ออกมาโดยไม่ใช้ .eq()
+        const { data, error } = await _supabase.from('questions').select('*');
+            
+        if (error) {
+            container.innerHTML = "Error: " + error.message;
+            return;
+        }
 
-        console.log("ข้อมูลที่กรองได้:", filteredData);
+        // กรองด้วย JavaScript เอง (ชัวร์กว่า)
+        // เราเทียบเป็น String ทั้งคู่เพื่อตัดปัญหาเรื่อง Type (Integer vs String)
+        const filteredData = data.filter(q => String(q.set_id) === String(setId));
 
-        if (filteredData && filteredData.length > 0) {
+        if (filteredData.length > 0) {
             container.innerHTML = '';
             filteredData.forEach((q, index) => {
                 container.innerHTML += `
@@ -76,15 +54,10 @@
                 `;
             });
         } else {
-            container.innerHTML = `<p>ไม่พบข้อมูลชุดที่ ${setId} (ลองตรวจสอบใน Supabase ว่าช่อง set_id มีเลข 1 อยู่จริงไหม)</p>`;
+            container.innerHTML = `<p>ไม่พบข้อสอบในชุดที่ ${setId} (ข้อมูลใน DB: ${JSON.stringify(data)})</p>`;
         }
     }
-
     loadQuestions();
-
-    function submitExam() {
-        alert("ระบบบันทึกคำตอบแล้ว");
-    }
 </script>
 </body>
 </html>
