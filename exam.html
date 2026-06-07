@@ -61,52 +61,39 @@
         }
     }
 
+<script>
     async function submitExam() {
         const userName = localStorage.getItem('userName');
-        if (!userName) {
-            alert("ไม่พบชื่อผู้ใช้งาน กรุณากลับไปหน้าเข้าสู่ระบบใหม่ครับ");
-            return;
-        }
+        if (!userName) { alert("กรุณาล็อกอินใหม่"); window.location.href = 'index.html'; return; }
 
-        // 1. คำนวณเวลาที่ใช้ (นาที)
         const endTime = new Date();
         const durationMinutes = Math.round((endTime - startTime) / 60000);
-
-        // 2. คำนวณคะแนนและเก็บคำตอบ
         let score = 0;
         let answersSelected = {}; 
 
         questionsData.forEach(q => {
             const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
             const val = selected ? selected.value : null;
-            answersSelected[q.id] = val; // เก็บคำตอบไว้ใน Object
-
-            if (val === q.correct_answer) {
-                score++;
-            }
+            answersSelected[q.id] = val;
+            if (val === q.correct_answer) score++;
         });
 
-        // 3. กำหนดสถานะผ่าน (เกณฑ์ 70%)
         const isPassed = score >= (questionsData.length * 0.7);
 
-        // 4. บันทึกลง Supabase
         const { error } = await _supabase.from('results').insert([{ 
             user_name: userName,
             set_id: setId,
             score: score,
-            user_answers: answersSelected, // เก็บคำตอบที่พนักงานตอบ
+            user_answers: answersSelected,
             is_passed: isPassed,
             duration_minutes: durationMinutes
         }]);
 
-        if (error) {
-            alert("บันทึกข้อมูลไม่สำเร็จ: " + error.message);
-        } else {
-            // 5. ส่งไปหน้า summary พร้อมส่งค่าคะแนนและ ID ชุดข้อสอบ
-            window.location.href = `results_summary.html?score=${score}&total=${questionsData.length}&set=${setId}&name=${userName}`;
+        if (error) { alert("บันทึกไม่สำเร็จ: " + error.message); } 
+        else {
+            window.location.href = `results_summary.html?score=${score}&total=${questionsData.length}&set=${setId}`;
         }
     }
-    loadQuestions();
 </script>
 </body>
 </html>
