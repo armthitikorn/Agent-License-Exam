@@ -5,9 +5,9 @@
     <title>สรุปผลคะแนน</title>
     <style>
         .container { max-width: 600px; margin: auto; padding: 20px; font-family: sans-serif; }
-        .wrong { color: #dc3545; }
+        .wrong { background-color: #ffe6e6; border: 1px solid #dc3545; }
         .correct { color: #28a745; font-weight: bold; }
-        .box { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+        .box { padding: 15px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -24,39 +24,53 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-   <script>
-    // ดึงค่าจาก URL
+    // 1. ดึงค่าจาก URL และ localStorage
     const params = new URLSearchParams(window.location.search);
     const score = params.get('score');
     const total = params.get('total');
     const setId = params.get('set');
+    const userName = localStorage.getItem('userName'); // ประกาศตัวแปรนี้ก่อนนำไปใช้
 
     // แสดงคะแนน
-    document.getElementById('displayName').innerText = localStorage.getItem('userName');
+    document.getElementById('displayName').innerText = userName;
     document.getElementById('scoreText').innerText = `คุณได้คะแนน: ${score} / ${total}`;
 
-async function showReview() {
-    // 1. ดึงข้อมูลคำตอบที่พนักงานตอบไว้ (user_answers)
-    const { data: resultData } = await _supabase.from('results')
-        .select('user_answers').eq('user_name', userName).eq('set_id', setId).single();
+    async function showReview() {
+        const container = document.getElementById('reviewContainer');
 
-    // 2. ดึงเฉลยจากตาราง questions
-    const { data: questions } = await _supabase.from('questions').select('*').eq('set_id', setId);
+        // ดึงข้อมูลคำตอบที่พนักงานตอบไว้จากตาราง results (แถวล่าสุด)
+        const { data: resultData } = await _supabase.from('results')
+            .select('user_answers')
+            .eq('user_name', userName)
+            .eq('set_id', setId)
+            .order('created_at', { ascending: false })
+            .single();
 
-    container.innerHTML = '<h3>ผลการตรวจข้อสอบ:</h3>';
-    questions.forEach((q) => {
-        const userAns = resultData.user_answers[q.id]; // คำตอบที่พนักงานเลือก
-        const isCorrect = (userAns === q.correct_answer);
-        
-        container.innerHTML += `
-            <div class="box ${isCorrect ? '' : 'wrong'}">
-                <p>${q.question_text}</p>
-                <p>คุณตอบ: <b>${userAns || 'ไม่ได้ตอบ'}</b></p>
-                <p style="color: green;">เฉลยที่ถูกต้องคือ: <b>${q.correct_answer}</b></p>
-            </div>
-        `;
-    });
-}
+        // ดึงเฉลยจากตาราง questions
+        const { data: questions } = await _supabase.from('questions')
+            .select('*')
+            .eq('set_id', Number(setId));
+
+        if (!questions) {
+            container.innerHTML = "ไม่พบข้อมูลข้อสอบ";
+            return;
+        }
+
+        container.innerHTML = '<h3>ผลการตรวจข้อสอบ:</h3>';
+        questions.forEach((q) => {
+            // ดึงคำตอบที่ผู้ใช้ตอบ (ถ้าไม่มี ให้แสดงว่าไม่ได้ตอบ)
+            const userAns = resultData ? resultData.user_answers[q.id] : null;
+            const isCorrect = (userAns === q.correct_answer);
+            
+            container.innerHTML += `
+                <div class="box ${isCorrect ? '' : 'wrong'}">
+                    <p><b>ข้อที่ ${q.id}:</b> ${q.question_text}</p>
+                    <p>คุณตอบ: <b>${userAns || 'ไม่ได้ตอบ'}</b></p>
+                    <p style="color: green;">เฉลยที่ถูกต้องคือ: <b>${q.correct_answer}</b></p>
+                </div>
+            `;
+        });
+    }
     showReview();
 </script>
 </body>
