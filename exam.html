@@ -46,8 +46,9 @@
         
         // 1. ดึงข้อมูลทั้งหมดในตาราง questions ออกมา (ไม่ต้องกรองที่ Supabase)
         const { data, error } = await _supabase
-            .from('questions')
-            .select('*'); 
+    .from('questions')
+    .select('*')
+    .eq('Set_ID', Number(setId)); // แก้เป็น Set_ID (ตามชื่อในภาพ)
             
         if (error) {
             container.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
