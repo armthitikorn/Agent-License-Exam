@@ -35,23 +35,43 @@
     document.getElementById('displayName').innerText = localStorage.getItem('userName');
     document.getElementById('scoreText').innerText = `คุณได้คะแนน: ${score} / ${total}`;
 
-    async function showReview() {
-        // ดึงข้อสอบชุดนั้นๆ มาเฉลย
-        const { data } = await _supabase.from('questions').select('*').eq('set_id', Number(setId));
-        const container = document.getElementById('reviewContainer');
-        container.innerHTML = '';
+async function showReview() {
+    const container = document.getElementById('reviewContainer');
+    const setId = params.get('set'); // ดึงค่า set จาก URL
 
-        data.forEach((q, index) => {
-            // เช็คชื่อคอลัมน์ให้ตรงกับ Database ของคุณ (ในรูปคือ option_a, option_b, option_c, option_d)
-            const correctKey = 'option_' + q.correct_answer.toLowerCase();
-            container.innerHTML += `
-                <div class="box">
-                    <p>${index + 1}. ${q.question_text}</p>
-                    <p class="correct">เฉลยที่ถูกต้อง: ${q[correctKey]}</p>
-                </div>
-            `;
-        });
+    if (!setId) {
+        container.innerHTML = "ไม่พบข้อมูลชุดข้อสอบ";
+        return;
     }
+
+    // ดึงข้อมูลข้อสอบของชุดนั้นๆ
+    const { data, error } = await _supabase
+        .from('questions')
+        .select('*')
+        .eq('set_id', setId); // ถ้า set_id ในตารางเป็น text ให้เอา Number() ออกครับ
+
+    if (error) {
+        container.innerHTML = "เกิดข้อผิดพลาดในการโหลดเฉลย: " + error.message;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = "ไม่พบข้อสอบในระบบ";
+        return;
+    }
+
+    container.innerHTML = '';
+    data.forEach((q, index) => {
+        // ใช้ logic เลือกคำตอบที่ถูกต้องโดยตรง
+        const correctKey = 'option_' + (q.correct_answer ? q.correct_answer.toLowerCase() : 'a');
+        container.innerHTML += `
+            <div class="box">
+                <p><b>ข้อที่ ${index + 1}:</b> ${q.question_text}</p>
+                <p class="correct">เฉลยที่ถูกต้อง: ${q[correctKey] || 'ไม่มีข้อมูล'}</p>
+            </div>
+        `;
+    });
+}
     showReview();
 </script>
 </body>
