@@ -67,7 +67,8 @@
         
         if (!userName) {
             alert("ไม่พบชื่อผู้ใช้งาน กรุณากลับไปหน้าเข้าสู่ระบบใหม่ครับ");
-            window.location.href = 'index.html'; // ส่งกลับไปหน้าล็อกอิน
+            // เปลี่ยนบรรทัด window.location.href เป็น:
+window.location.href = `results_summary.html?score=${score}&total=${questionsData.length}&set=${setId}`;
             return;
         }
 
