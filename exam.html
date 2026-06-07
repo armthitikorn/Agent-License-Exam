@@ -30,14 +30,14 @@
         
         // ตรงนี้คือจุดที่แก้ครับ: ใช้ Set_ID (ตามชื่อในภาพ)
         const { data, error } = await _supabase
-            .from('questions')
-            .select('*')
-            .eq('Set_ID', Number(setId));
+        .from('questions')
+        .select('*')
+        .eq('set_id', Number(setId)); // ใช้ชื่อคอลัมน์ให้ตรงเป๊ะกับใน DB
             
-        if (error) {
-            container.innerHTML = "Error: " + error.message;
-            return;
-        }
+    if (error) {
+        container.innerHTML = "Error: " + error.message;
+        return;
+    }
 
         if (data && data.length > 0) {
             container.innerHTML = '';
