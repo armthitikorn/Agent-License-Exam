@@ -39,22 +39,23 @@
     document.getElementById('setNum').innerText = setIdRaw || "ไม่ระบุ";
 
         async function loadQuestions() {
-        const container = document.getElementById('examContainer');
-        const setId = sessionStorage.getItem('setId');
+    const container = document.getElementById('examContainer');
+    const setId = sessionStorage.getItem('setId');
+    
+    // บังคับให้ setId กลายเป็นตัวเลข (Number) แน่นอน 100%
+    const finalSetId = Number(setId); 
+    
+    console.log("กำลังดึงข้อมูลด้วย set_id:", finalSetId); // ดูใน Console ว่าเป็นเลข 1 หรือไม่
+    
+    const { data, error } = await _supabase
+        .from('questions')
+        .select('*')
+        .eq('set_id', finalSetId); // ส่งเป็นตัวเลขไปหาตาราง int4
         
-        console.log("กำลังดึงข้อสอบชุดที่:", setId);
-        
-        // 1. ดึงข้อมูลทั้งหมดในตาราง questions ออกมา (ไม่ต้องกรองที่ Supabase)
-        const { data, error } = await _supabase
-    .from('questions')
-    .select('*')
-    .eq('Set_ID', Number(setId)); // แก้เป็น Set_ID (ตามชื่อในภาพ)
-            
-        if (error) {
-            container.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
-            return;
-        }
-
+    if (error) {
+        container.innerHTML = "Error: " + error.message;
+        return;
+    }
         // 2. ใช้ JavaScript กรองข้อมูลเอง เพื่อแก้ปัญหาเรื่องชนิดข้อมูลไม่ตรงกัน
         // เราใช้ .toString().trim() เพื่อให้แน่ใจว่าไม่มีช่องว่างและเป็นข้อความเหมือนกัน
         const filteredData = data.filter(q => String(q.set_id).trim() === String(setId).trim());
