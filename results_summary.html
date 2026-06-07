@@ -30,6 +30,7 @@ const params = new URLSearchParams(window.location.search);
     const total = params.get('total');
     const setId = params.get('set');
     const userName = localStorage.getItem('userName');
+    document.getElementById('displayName').innerText = userName || "ผู้ใช้งาน";
 
     document.getElementById('scoreText').innerText = `คุณได้คะแนน: ${score} / ${total}`;
 
