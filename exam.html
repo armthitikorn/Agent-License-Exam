@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <title>แบบทดสอบ</title>
     <style>
-        .container { max-width: 600px; margin: auto; padding: 20px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; font-family: sans-serif; }
         .question { margin-bottom: 20px; padding: 15px; border-bottom: 1px solid #ccc; }
-        button { background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        button { background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; }
+        button:hover { background-color: #218838; }
     </style>
 </head>
 <body>
@@ -14,29 +15,41 @@
 <div class="container">
     <h2>ทำข้อสอบชุดที่ <span id="setNum"></span></h2>
     <div id="examContainer">
-        </div>
+        <p>กำลังโหลดข้อสอบ...</p>
+    </div>
     <button onclick="submitExam()">ส่งข้อสอบ</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
+    // 1. ตั้งค่า Supabase (ใช้ _supabase ให้ตรงกับที่เรียกใช้ด้านล่าง)
     const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
     
-    // 1. ดึง setId จาก sessionStorage และแสดงผล
+    // 2. ดึง setId จาก sessionStorage
     const setId = sessionStorage.getItem('setId');
-    document.getElementById('setNum').innerText = setId;
+    document.getElementById('setNum').innerText = setId || "ไม่ระบุ";
 
-    // 2. ฟังก์ชันดึงข้อสอบ
+    // 3. ฟังก์ชันดึงข้อสอบ
     async function loadQuestions() {
+        const container = document.getElementById('examContainer');
+        
+        // แปลง setId ให้เป็นตัวเลข เพราะฐานข้อมูลมักเก็บเป็น Integer
+        const numSetId = parseInt(setId);
+        
         const { data, error } = await _supabase
             .from('questions')
             .select('*')
-            .eq('set_id', setId);
+            .eq('set_id', numSetId);
             
-        if (data) {
-            const container = document.getElementById('examContainer');
+        if (error) {
+            container.innerHTML = `<p style="color:red;">เกิดข้อผิดพลาด: ${error.message}</p>`;
+            return;
+        }
+
+        if (data && data.length > 0) {
+            container.innerHTML = ''; // เคลียร์ข้อความ "กำลังโหลด"
             data.forEach((q, index) => {
                 container.innerHTML += `
                     <div class="question">
@@ -48,14 +61,17 @@
                     </div>
                 `;
             });
+        } else {
+            container.innerHTML = "<p>ไม่พบข้อสอบในชุดนี้</p>";
         }
     }
 
+    // เริ่มทำงานเมื่อเปิดหน้าเว็บ
     loadQuestions();
 
-    // 3. ฟังก์ชันส่งข้อสอบ (เดี๋ยวเราค่อยมาลงรายละเอียดกันครับ)
+    // 4. ฟังก์ชันส่งข้อสอบ (ไว้ต่อยอดต่อ)
     function submitExam() {
-        alert("ส่งข้อสอบแล้ว!");
+        alert("ระบบบันทึกคำตอบแล้ว (ฟังก์ชันส่งข้อมูลกำลังพัฒนา)");
     }
 </script>
 </body>
