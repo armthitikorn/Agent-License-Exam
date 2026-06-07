@@ -25,12 +25,11 @@
     const setId = sessionStorage.getItem('setId');
     document.getElementById('setNum').innerText = setId || "ไม่ระบุ";
 
-    let questionsData = []; // เก็บข้อมูลข้อสอบไว้เพื่อตรวจคะแนน
-    const startTime = new Date(); // บันทึกเวลาเริ่มทำข้อสอบ
+    let questionsData = [];
+    const startTime = new Date();
 
     async function loadQuestions() {
         const container = document.getElementById('examContainer');
-        
         const { data, error } = await _supabase
             .from('questions')
             .select('*')
@@ -41,7 +40,7 @@
             return;
         }
 
-        questionsData = data; // เก็บข้อมูลลงตัวแปร global
+        questionsData = data;
 
         if (data && data.length > 0) {
             container.innerHTML = '';
@@ -61,7 +60,6 @@
         }
     }
 
-<script>
     async function submitExam() {
         const userName = localStorage.getItem('userName');
         if (!userName) { alert("กรุณาล็อกอินใหม่"); window.location.href = 'index.html'; return; }
@@ -94,6 +92,8 @@
             window.location.href = `results_summary.html?score=${score}&total=${questionsData.length}&set=${setId}`;
         }
     }
+
+    loadQuestions(); // อย่าลืมบรรทัดนี้ เพื่อให้ข้อสอบโหลดตอนเปิดหน้าเว็บครับ
 </script>
 </body>
 </html>
