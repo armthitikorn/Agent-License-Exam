@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>สรุปผลคะแนน</title>
+    <style>
+        .container { max-width: 600px; margin: auto; padding: 20px; font-family: sans-serif; }
+        .wrong { color: #dc3545; }
+        .correct { color: #28a745; font-weight: bold; }
+        .box { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>สรุปผลการสอบของคุณ <span id="displayName"></span></h2>
+    <h3 id="scoreText"></h3>
+    <div id="reviewContainer">กำลังโหลดเฉลย...</div>
+    <button onclick="window.location.href='index.html'">กลับหน้าแรก</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+    const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('displayName').innerText = localStorage.getItem('userName');
+    document.getElementById('scoreText').innerText = `คุณได้คะแนน: ${params.get('score')} / ${params.get('total')}`;
+
+    async function showReview() {
+        const { data } = await _supabase.from('questions').select('*').eq('set_id', params.get('set'));
+        const container = document.getElementById('reviewContainer');
+        container.innerHTML = '';
+
+        data.forEach((q, index) => {
+            container.innerHTML += `
+                <div class="box">
+                    <p>${index + 1}. ${q.question_text}</p>
+                    <p class="correct">เฉลยที่ถูกต้อง: ${q['option_' + q.correct_answer.toLowerCase()]}</p>
+                </div>
+            `;
+        });
+    }
+    showReview();
+</script>
+</body>
+</html>
