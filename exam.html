@@ -62,10 +62,16 @@
     }
 
     async function submitExam() {
-        const userName = prompt("กรอกชื่อ-นามสกุลของคุณ:");
-        if (!userName) return alert("กรุณากรอกชื่อก่อนส่งครับ");
+        // 1. ดึงชื่อจาก localStorage ที่คุณบันทึกไว้ในหน้าแรก
+        const userName = localStorage.getItem('userName');
+        
+        if (!userName) {
+            alert("ไม่พบชื่อผู้ใช้งาน กรุณากลับไปหน้าเข้าสู่ระบบใหม่ครับ");
+            window.location.href = 'index.html'; // ส่งกลับไปหน้าล็อกอิน
+            return;
+        }
 
-        // 1. คำนวณคะแนน
+        // 2. คำนวณคะแนน
         let score = 0;
         questionsData.forEach(q => {
             const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
@@ -74,17 +80,17 @@
             }
         });
 
-        // 2. คำนวณเวลาที่ใช้ (นาที)
+        // 3. คำนวณเวลาที่ใช้ (นาที)
         const endTime = new Date();
         const durationMinutes = Math.round((endTime - startTime) / 60000);
         
-        // 3. กำหนดสถานะผ่าน (สมมติว่าเกณฑ์ผ่านคือ 70% ของข้อสอบทั้งหมด)
+        // 4. กำหนดสถานะผ่าน (สมมติเกณฑ์ผ่าน 70%)
         const isPassed = score >= (questionsData.length * 0.7);
 
-        // 4. บันทึกลง Supabase
+        // 5. บันทึกลง Supabase
         const { error } = await _supabase.from('results').insert([
             { 
-                user_name: userName, 
+                user_name: userName, // ดึงค่าจากตัวแปรด้านบน
                 set_id: setId, 
                 score: score,
                 is_passed: isPassed,
@@ -95,11 +101,11 @@
         if (error) {
             alert("บันทึกข้อมูลไม่สำเร็จ: " + error.message);
         } else {
-            alert(`ส่งเรียบร้อย! คุณได้ ${score} คะแนน ใช้เวลาไป ${durationMinutes} นาที`);
-            window.location.href = 'dashboard.html'; // เปลี่ยนหน้าไปดูผลรวม
+            alert(`ส่งเรียบร้อย! คุณ ${userName} ได้ ${score} คะแนน ใช้เวลาไป ${durationMinutes} นาที`);
+            // เลือกหน้านำทางไปหลังจากส่งเสร็จ
+            window.location.href = 'results_summary.html'; 
         }
     }
-
     loadQuestions();
 </script>
 </body>
