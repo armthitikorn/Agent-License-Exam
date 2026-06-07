@@ -61,67 +61,49 @@
         }
     }
 
-async function submitExam() {
-    const userName = localStorage.getItem('userName');
-    let score = 0;
-    let answersSelected = {}; // สร้าง Object เก็บคำตอบ เช่น { "id_1": "A", "id_2": "B" }
+    async function submitExam() {
+        const userName = localStorage.getItem('userName');
+        if (!userName) {
+            alert("ไม่พบชื่อผู้ใช้งาน กรุณากลับไปหน้าเข้าสู่ระบบใหม่ครับ");
+            return;
+        }
 
-    questionsData.forEach(q => {
-        const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
-        const val = selected ? selected.value : null;
-        answersSelected[q.id] = val; // บันทึกว่าข้อ id นี้ ตอบอะไร
+        // 1. คำนวณเวลาที่ใช้ (นาที)
+        const endTime = new Date();
+        const durationMinutes = Math.round((endTime - startTime) / 60000);
 
-        if (val === q.correct_answer) score++;
-    });
-
-    // บันทึกลง Supabase พร้อมคำตอบที่เลือก (answersSelected)
-    await _supabase.from('results').insert([{ 
-        user_name: userName,
-        set_id: setId,
-        score: score,
-        user_answers: answersSelected, // <--- เพิ่มตรงนี้
-        is_passed: (score >= (questionsData.length * 0.7)),
-        duration_minutes: durationMinutes
-    }]);
-    
-    // ส่งไปหน้า summary พร้อมส่ง user_answers ไปด้วย
-    // (หรือจะให้หน้า summary ดึงจาก DB ก็ได้ครับ สะดวกกว่า)
-    window.location.href = `results_summary.html?set=${setId}&name=${userName}`;
-}
-
-        // 2. คำนวณคะแนน
+        // 2. คำนวณคะแนนและเก็บคำตอบ
         let score = 0;
+        let answersSelected = {}; 
+
         questionsData.forEach(q => {
             const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
-            if (selected && selected.value === q.correct_answer) {
+            const val = selected ? selected.value : null;
+            answersSelected[q.id] = val; // เก็บคำตอบไว้ใน Object
+
+            if (val === q.correct_answer) {
                 score++;
             }
         });
 
-        // 3. คำนวณเวลาที่ใช้ (นาที)
-        const endTime = new Date();
-        const durationMinutes = Math.round((endTime - startTime) / 60000);
-        
-        // 4. กำหนดสถานะผ่าน (เกณฑ์ 70%)
+        // 3. กำหนดสถานะผ่าน (เกณฑ์ 70%)
         const isPassed = score >= (questionsData.length * 0.7);
 
-        // 5. บันทึกลง Supabase
-        const { error } = await _supabase.from('results').insert([
-            { 
-                user_name: userName, 
-                set_id: setId, 
-                score: score,
-                is_passed: isPassed,
-                duration_minutes: durationMinutes
-            }
-        ]);
+        // 4. บันทึกลง Supabase
+        const { error } = await _supabase.from('results').insert([{ 
+            user_name: userName,
+            set_id: setId,
+            score: score,
+            user_answers: answersSelected, // เก็บคำตอบที่พนักงานตอบ
+            is_passed: isPassed,
+            duration_minutes: durationMinutes
+        }]);
 
         if (error) {
             alert("บันทึกข้อมูลไม่สำเร็จ: " + error.message);
         } else {
-            // 6. ส่งค่าผ่าน URL ไปยังหน้า Summary เพื่อแสดงผล
-            const total = questionsData.length;
-            window.location.href = `results_summary.html?score=${score}&total=${total}&set=${setId}`;
+            // 5. ส่งไปหน้า summary พร้อมส่งค่าคะแนนและ ID ชุดข้อสอบ
+            window.location.href = `results_summary.html?score=${score}&total=${questionsData.length}&set=${setId}&name=${userName}`;
         }
     }
     loadQuestions();
