@@ -25,38 +25,47 @@
     const setId = sessionStorage.getItem('setId');
     document.getElementById('setNum').innerText = setId;
 
-    async function loadQuestions() {
-        const container = document.getElementById('examContainer');
+    async function submitExam() {
+    const container = document.getElementById('examContainer');
+    const questions = container.querySelectorAll('.question');
+    let score = 0;
+    
+    // 1. ตรวจคำตอบทีละข้อ
+    // หมายเหตุ: ต้องแน่ใจว่าใน Supabase มีคอลัมน์ชื่อ 'correct_answer' และ 'id'
+    // เนื่องจากเราดึงข้อมูลมาแล้ว เราจะนำมาเทียบกับค่าที่ผู้ใช้เลือก
+    
+    // ตรงนี้เราจะให้ระบบวนลูปเช็กค่าที่พนักงานติ๊กครับ
+    questions.forEach((q, index) => {
+        const selected = q.querySelector('input[type="radio"]:checked');
+        const correctAnswer = /* ค่าคำตอบที่ถูกต้องจากฐานข้อมูล */; 
         
-        // ดึงข้อมูลทั้งหมดในตาราง questions ออกมาโดยไม่ใช้ .eq()
-        const { data, error } = await _supabase.from('questions').select('*');
-            
-        if (error) {
-            container.innerHTML = "Error: " + error.message;
-            return;
+        if (selected && selected.value === /* ค่าที่ถูกต้อง */) {
+            score++;
         }
+    });
 
-        // กรองด้วย JavaScript เอง (ชัวร์กว่า)
-        // เราเทียบเป็น String ทั้งคู่เพื่อตัดปัญหาเรื่อง Type (Integer vs String)
-        const filteredData = data.filter(q => String(q.set_id) === String(setId));
+    // 2. บันทึกลง Supabase (ตาราง attempts)
+    const userName = sessionStorage.getItem('userName'); // สมมติว่าเก็บชื่อไว้ตอน Login
+    const setId = sessionStorage.getItem('setId');
 
-        if (filteredData.length > 0) {
-            container.innerHTML = '';
-            filteredData.forEach((q, index) => {
-                container.innerHTML += `
-                    <div class="question">
-                        <p>${index + 1}. ${q.question_text}</p>
-                        <input type="radio" name="q${q.id}" value="A"> ก. ${q.option_a}<br>
-                        <input type="radio" name="q${q.id}" value="B"> ข. ${q.option_b}<br>
-                        <input type="radio" name="q${q.id}" value="C"> ค. ${q.option_c}<br>
-                        <input type="radio" name="q${q.id}" value="D"> ง. ${q.option_d}<br>
-                    </div>
-                `;
-            });
-        } else {
-            container.innerHTML = `<p>ไม่พบข้อสอบในชุดที่ ${setId} (ข้อมูลใน DB: ${JSON.stringify(data)})</p>`;
-        }
+    const { data, error } = await _supabase
+        .from('attempts')
+        .insert([
+            { 
+                user_name: userName, 
+                score: score, 
+                set_id: setId,
+                created_at: new Date() 
+            }
+        ]);
+
+    if (error) {
+        alert("ส่งคำตอบไม่สำเร็จ: " + error.message);
+    } else {
+        alert("ส่งข้อสอบเรียบร้อยแล้ว! คะแนนของคุณคือ: " + score);
+        window.location.href = 'dashboard.html'; // กลับไปหน้าเลือกชุด
     }
+}
     loadQuestions();
 </script>
 </body>
