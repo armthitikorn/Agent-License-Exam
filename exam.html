@@ -61,15 +61,33 @@
         }
     }
 
-        async function submitExam() {
-        // 1. ดึงชื่อจาก localStorage
-        const userName = localStorage.getItem('userName');
-        
-        if (!userName) {
-            alert("ไม่พบชื่อผู้ใช้งาน กรุณากลับไปหน้าเข้าสู่ระบบใหม่ครับ");
-            window.location.href = 'index.html'; 
-            return;
-        }
+async function submitExam() {
+    const userName = localStorage.getItem('userName');
+    let score = 0;
+    let answersSelected = {}; // สร้าง Object เก็บคำตอบ เช่น { "id_1": "A", "id_2": "B" }
+
+    questionsData.forEach(q => {
+        const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+        const val = selected ? selected.value : null;
+        answersSelected[q.id] = val; // บันทึกว่าข้อ id นี้ ตอบอะไร
+
+        if (val === q.correct_answer) score++;
+    });
+
+    // บันทึกลง Supabase พร้อมคำตอบที่เลือก (answersSelected)
+    await _supabase.from('results').insert([{ 
+        user_name: userName,
+        set_id: setId,
+        score: score,
+        user_answers: answersSelected, // <--- เพิ่มตรงนี้
+        is_passed: (score >= (questionsData.length * 0.7)),
+        duration_minutes: durationMinutes
+    }]);
+    
+    // ส่งไปหน้า summary พร้อมส่ง user_answers ไปด้วย
+    // (หรือจะให้หน้า summary ดึงจาก DB ก็ได้ครับ สะดวกกว่า)
+    window.location.href = `results_summary.html?set=${setId}&name=${userName}`;
+}
 
         // 2. คำนวณคะแนน
         let score = 0;
