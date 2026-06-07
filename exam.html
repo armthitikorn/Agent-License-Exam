@@ -61,18 +61,16 @@
         }
     }
 
-    async function submitExam() {
-        // 1. ดึงชื่อจาก localStorage ที่คุณบันทึกไว้ในหน้าแรก
+        async function submitExam() {
+        // 1. ดึงชื่อจาก localStorage
         const userName = localStorage.getItem('userName');
         
         if (!userName) {
             alert("ไม่พบชื่อผู้ใช้งาน กรุณากลับไปหน้าเข้าสู่ระบบใหม่ครับ");
-            // ... (โค้ดบันทึกข้อมูลเข้า Supabase สำเร็จแล้ว)
-} else {
-    // ส่งค่า score, total (จำนวนข้อ), และ set (ชุดข้อสอบ) ไปทาง URL
-    const totalQuestions = questionsData.length;
-    window.location.href = `results_summary.html?score=${score}&total=${totalQuestions}&set=${setId}`;
-}
+            window.location.href = 'index.html'; 
+            return;
+        }
+
         // 2. คำนวณคะแนน
         let score = 0;
         questionsData.forEach(q => {
@@ -86,13 +84,13 @@
         const endTime = new Date();
         const durationMinutes = Math.round((endTime - startTime) / 60000);
         
-        // 4. กำหนดสถานะผ่าน (สมมติเกณฑ์ผ่าน 70%)
+        // 4. กำหนดสถานะผ่าน (เกณฑ์ 70%)
         const isPassed = score >= (questionsData.length * 0.7);
 
         // 5. บันทึกลง Supabase
         const { error } = await _supabase.from('results').insert([
             { 
-                user_name: userName, // ดึงค่าจากตัวแปรด้านบน
+                user_name: userName, 
                 set_id: setId, 
                 score: score,
                 is_passed: isPassed,
@@ -103,9 +101,9 @@
         if (error) {
             alert("บันทึกข้อมูลไม่สำเร็จ: " + error.message);
         } else {
-            alert(`ส่งเรียบร้อย! คุณ ${userName} ได้ ${score} คะแนน ใช้เวลาไป ${durationMinutes} นาที`);
-            // เลือกหน้านำทางไปหลังจากส่งเสร็จ
-            window.location.href = 'results_summary.html'; 
+            // 6. ส่งค่าผ่าน URL ไปยังหน้า Summary เพื่อแสดงผล
+            const total = questionsData.length;
+            window.location.href = `results_summary.html?score=${score}&total=${total}&set=${setId}`;
         }
     }
     loadQuestions();
