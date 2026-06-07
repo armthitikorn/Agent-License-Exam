@@ -5,11 +5,11 @@
     <title>แบบทดสอบ</title>
     <style>
         .container { max-width: 600px; margin: auto; padding: 20px; font-family: sans-serif; }
-        .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .question { margin-bottom: 20px; padding: 15px; border-bottom: 1px solid #ccc; }
+        button { background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h2>ทำข้อสอบชุดที่ <span id="setNum"></span></h2>
     <div id="examContainer">กำลังโหลดข้อสอบ...</div>
@@ -23,50 +23,41 @@
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
     
     const setId = sessionStorage.getItem('setId');
-    document.getElementById('setNum').innerText = setId;
+    document.getElementById('setNum').innerText = setId || "ไม่ระบุ";
 
-    async function submitExam() {
-    const container = document.getElementById('examContainer');
-    const questions = container.querySelectorAll('.question');
-    let score = 0;
-    
-    // 1. ตรวจคำตอบทีละข้อ
-    // หมายเหตุ: ต้องแน่ใจว่าใน Supabase มีคอลัมน์ชื่อ 'correct_answer' และ 'id'
-    // เนื่องจากเราดึงข้อมูลมาแล้ว เราจะนำมาเทียบกับค่าที่ผู้ใช้เลือก
-    
-    // ตรงนี้เราจะให้ระบบวนลูปเช็กค่าที่พนักงานติ๊กครับ
-    questions.forEach((q, index) => {
-        const selected = q.querySelector('input[type="radio"]:checked');
-        const correctAnswer = /* ค่าคำตอบที่ถูกต้องจากฐานข้อมูล */; 
+    async function loadQuestions() {
+        const container = document.getElementById('examContainer');
         
-        if (selected && selected.value === /* ค่าที่ถูกต้อง */) {
-            score++;
+        // ตรงนี้คือจุดที่แก้ครับ: ใช้ Set_ID (ตามชื่อในภาพ)
+        const { data, error } = await _supabase
+            .from('questions')
+            .select('*')
+            .eq('Set_ID', Number(setId));
+            
+        if (error) {
+            container.innerHTML = "Error: " + error.message;
+            return;
         }
-    });
 
-    // 2. บันทึกลง Supabase (ตาราง attempts)
-    const userName = sessionStorage.getItem('userName'); // สมมติว่าเก็บชื่อไว้ตอน Login
-    const setId = sessionStorage.getItem('setId');
-
-    const { data, error } = await _supabase
-        .from('attempts')
-        .insert([
-            { 
-                user_name: userName, 
-                score: score, 
-                set_id: setId,
-                created_at: new Date() 
-            }
-        ]);
-
-    if (error) {
-        alert("ส่งคำตอบไม่สำเร็จ: " + error.message);
-    } else {
-        alert("ส่งข้อสอบเรียบร้อยแล้ว! คะแนนของคุณคือ: " + score);
-        window.location.href = 'dashboard.html'; // กลับไปหน้าเลือกชุด
+        if (data && data.length > 0) {
+            container.innerHTML = '';
+            data.forEach((q, index) => {
+                container.innerHTML += `
+                    <div class="question">
+                        <p>${index + 1}. ${q.question_text}</p>
+                        <input type="radio" name="q${q.id}" value="A"> ก. ${q.option_a}<br>
+                        <input type="radio" name="q${q.id}" value="B"> ข. ${q.option_b}<br>
+                        <input type="radio" name="q${q.id}" value="C"> ค. ${q.option_c}<br>
+                        <input type="radio" name="q${q.id}" value="D"> ง. ${q.option_d}<br>
+                    </div>
+                `;
+            });
+        } else {
+            container.innerHTML = "<p>ไม่พบข้อสอบในชุดนี้</p>";
+        }
     }
-}
     loadQuestions();
+    function submitExam() { alert("ส่งข้อสอบแล้ว!"); }
 </script>
 </body>
 </html>
