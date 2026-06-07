@@ -34,35 +34,40 @@
     // 3. ฟังก์ชันดึงข้อสอบ
     async function loadQuestions() {
         const container = document.getElementById('examContainer');
+        const setId = sessionStorage.getItem('setId');
         
-        // แปลง setId ให้เป็นตัวเลข เพราะฐานข้อมูลมักเก็บเป็น Integer
-        const numSetId = parseInt(setId);
+        // ลอง log ออกมาดูใน Console (F12)
+        console.log("ค่า setId ที่ดึงมาได้คือ:", setId);
+        console.log("ประเภทของข้อมูลคือ:", typeof setId);
         
+        // เปลี่ยนจาก parseInt เป็น Number หรือส่งค่าตรงๆ ดูก่อน
         const { data, error } = await _supabase
             .from('questions')
             .select('*')
-            .eq('set_id', numSetId);
+            .eq('set_id', setId); // ลองส่ง setId ไปตรงๆ ก่อน
             
         if (error) {
-            container.innerHTML = `<p style="color:red;">เกิดข้อผิดพลาด: ${error.message}</p>`;
+            container.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
             return;
         }
 
+        console.log("ข้อมูลที่ดึงได้จาก Supabase:", data);
+
         if (data && data.length > 0) {
-            container.innerHTML = ''; // เคลียร์ข้อความ "กำลังโหลด"
+            container.innerHTML = '';
             data.forEach((q, index) => {
                 container.innerHTML += `
                     <div class="question">
                         <p>${index + 1}. ${q.question_text}</p>
                         <input type="radio" name="q${q.id}" value="A"> ก. ${q.option_a}<br>
-                        <input type="radio" name="q${q.id}" value="B"> ข. ${q.option_b}<br>
-                        <input type="radio" name="q${q.id}" value="C"> ค. ${q.option_c}<br>
-                        <input type="radio" name="q${q.id}" value="D"> ง. ${q.option_d}<br>
+                        <input type="radio" name="q${q.id}" value="B"> ${q.option_b}<br>
+                        <input type="radio" name="q${q.id}" value="C"> ${q.option_c}<br>
+                        <input type="radio" name="q${q.id}" value="D"> ${q.option_d}<br>
                     </div>
                 `;
             });
         } else {
-            container.innerHTML = "<p>ไม่พบข้อสอบในชุดนี้</p>";
+            container.innerHTML = "<p>ไม่พบข้อสอบในชุดนี้ (ลองเช็กเลข set_id ในฐานข้อมูลอีกครั้ง)</p>";
         }
     }
 
