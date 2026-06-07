@@ -24,20 +24,30 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+   <script>
+    // ดึงค่าจาก URL
     const params = new URLSearchParams(window.location.search);
+    const score = params.get('score');
+    const total = params.get('total');
+    const setId = params.get('set');
+
+    // แสดงคะแนน
     document.getElementById('displayName').innerText = localStorage.getItem('userName');
-    document.getElementById('scoreText').innerText = `คุณได้คะแนน: ${params.get('score')} / ${params.get('total')}`;
+    document.getElementById('scoreText').innerText = `คุณได้คะแนน: ${score} / ${total}`;
 
     async function showReview() {
-        const { data } = await _supabase.from('questions').select('*').eq('set_id', params.get('set'));
+        // ดึงข้อสอบชุดนั้นๆ มาเฉลย
+        const { data } = await _supabase.from('questions').select('*').eq('set_id', Number(setId));
         const container = document.getElementById('reviewContainer');
         container.innerHTML = '';
 
         data.forEach((q, index) => {
+            // เช็คชื่อคอลัมน์ให้ตรงกับ Database ของคุณ (ในรูปคือ option_a, option_b, option_c, option_d)
+            const correctKey = 'option_' + q.correct_answer.toLowerCase();
             container.innerHTML += `
                 <div class="box">
                     <p>${index + 1}. ${q.question_text}</p>
-                    <p class="correct">เฉลยที่ถูกต้อง: ${q['option_' + q.correct_answer.toLowerCase()]}</p>
+                    <p class="correct">เฉลยที่ถูกต้อง: ${q[correctKey]}</p>
                 </div>
             `;
         });
